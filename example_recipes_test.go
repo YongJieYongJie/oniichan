@@ -3,6 +3,8 @@ package oniichan_test
 import (
 	"fmt"
 
+	"golang.org/x/exp/constraints"
+
 	. "github.com/YongJieYongJie/oniichan"
 )
 
@@ -17,7 +19,7 @@ func Prepend[T any](elem T, in <-chan T) <-chan T {
 }
 
 // Return function(0), function(1), ...
-func Tabulate[T Ordered, R any](f func(T) R, start T) <-chan R {
+func Tabulate[T constraints.Integer, R any](f func(T) R, start T) <-chan R {
 	return Map(f, Count(start))
 }
 

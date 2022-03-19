@@ -9,48 +9,17 @@ import (
 	"sort"
 	"sync"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/YongJieYongJie/tttuples/atuple"
 )
 
 const buffer_size = 257 // Prime number closest to 256
 
-// Ordered is any Ordered type: any type that supports the operators < <= >= >.
-//
-// Note: This is a temporary shim to constraints.Ordered as proposed in
-// https://github.com/golang/go/discussions/47319.
-type Ordered interface {
-	Integer | Float
-}
-
-// Integer is any integer type.
-//
-// Note: This is a temporary shim to constraints.Integer as proposed in
-// https://github.com/golang/go/discussions/47319.
-type Integer interface {
-	int | int8 | int32 | int64 |
-		uint | uint8 | uint32 | uint64
-}
-
-// Float is any floating-point type.
-//
-// Note: This is a temporary shim to constraints.Float as proposed in
-// https://github.com/golang/go/discussions/47319.
-type Float interface {
-	float32 | float64
-}
-
-// Complex is any complex number type.
-//
-// Note: This is a temporary shim to constraints.Complex as proposed in
-// https://github.com/golang/go/discussions/47319.
-type Complex interface {
-	complex64 | complex128
-}
-
 // Number is a constraint that permits any number type: any type that
 // supports the arithmetic operators + - / *.
 type Number interface {
-	Integer | Float | Complex
+	constraints.Integer | constraints.Float | constraints.Complex
 }
 
 // All returns true if all elements in the input channel returns true when pred
@@ -78,7 +47,7 @@ func Filter[T any](pred func(T) bool, in <-chan T) <-chan T {
 }
 
 // Max returns the largest element from input channel.
-func Max[T Ordered](in <-chan T) T {
+func Max[T constraints.Ordered](in <-chan T) T {
 	out := <-in
 	for e := range in {
 		if e > out {
@@ -90,7 +59,7 @@ func Max[T Ordered](in <-chan T) T {
 
 // MaxFunc returns the element from input channel that returns that largest
 // value when f is applied.
-func MaxFunc[T1 any, T2 Ordered](in <-chan T1, f func(T1) T2) T1 {
+func MaxFunc[T1 any, T2 constraints.Ordered](in <-chan T1, f func(T1) T2) T1 {
 	out := <-in
 	fOut := f(out)
 	for e := range in {
@@ -104,7 +73,7 @@ func MaxFunc[T1 any, T2 Ordered](in <-chan T1, f func(T1) T2) T1 {
 }
 
 // Min returns the smallest element from input channel.
-func Min[T Ordered](in <-chan T) T {
+func Min[T constraints.Ordered](in <-chan T) T {
 	out := <-in
 	for e := range in {
 		if e < out {
@@ -118,7 +87,7 @@ func Min[T Ordered](in <-chan T) T {
 // value when f is applied.
 //
 // Design decision: whether to use keyfunc like python, or lessfunc like Go
-func MinFunc[T1 any, T2 Ordered](in <-chan T1, f func(T1) T2) T1 {
+func MinFunc[T1 any, T2 constraints.Ordered](in <-chan T1, f func(T1) T2) T1 {
 	out := <-in
 	fOut := f(out)
 	for e := range in {
@@ -161,7 +130,7 @@ func Reduce[T any](in <-chan T, f func(T, T) T) T {
 // read into a slice.
 //
 // Note 2: API is different sort.Slice.
-func Sorted[T1 any, T2 Ordered](in <-chan T1, key func(T1) T2) <-chan T1 {
+func Sorted[T1 any, T2 constraints.Ordered](in <-chan T1, key func(T1) T2) <-chan T1 {
 	out := make(chan T1)
 	go func() {
 		defer close(out)
@@ -231,7 +200,7 @@ func EnumerateFrom[T any](in <-chan T, from int) <-chan atuple.Packed2[int, T] {
 
 // Range returns a channel that produces numbers from 0 to (but not including)
 // stop.
-func Range[T Ordered](stop T) <-chan T {
+func Range[T constraints.Integer](stop T) <-chan T {
 	if stop <= 0 {
 		panic("invalid argument to Range: stop must be greater than zero")
 	}
@@ -240,7 +209,7 @@ func Range[T Ordered](stop T) <-chan T {
 
 // RangeFromTo returns a channel that produces numbers from start to (but not
 // including) stop.
-func RangeFromTo[T Ordered](start, stop T) <-chan T {
+func RangeFromTo[T constraints.Integer](start, stop T) <-chan T {
 	if start >= stop {
 		panic("invalid argument to RangeFromTo: start must be smaller than stop")
 	}
@@ -257,7 +226,7 @@ func RangeFromTo[T Ordered](start, stop T) <-chan T {
 // TODO: consider renaming to RangeFromToStep?
 // RangeStep returns a channel that produces numbers from start to (but not
 // including) stop, spaced evenly apart by step amount.
-func RangeStep[T Ordered](start, stop, step T) <-chan T {
+func RangeStep[T constraints.Integer](start, stop, step T) <-chan T {
 	if step == 0 {
 		panic("invalid argument to RangeStep: step cannot be 0")
 	}
@@ -322,13 +291,13 @@ func Map{{ .N }}[{{ .T1_T2___TN }}, R any](
 
 // Count returns an infinite channel that produces increasing values
 // starting with number start.
-func Count[v Ordered](start v) <-chan v {
+func Count[v constraints.Integer](start v) <-chan v {
 	return CountStep(start, 1)
 }
 
 // Count returns an infinite channel that produces evenly spaced values
 // starting with number start.
-func CountStep[v Ordered](start, step v) <-chan v {
+func CountStep[v constraints.Ordered](start, step v) <-chan v {
 	out := make(chan v)
 	go func() {
 		defer close(out)
@@ -387,7 +356,7 @@ func RepeatTimes[T any](elem T, times int) <-chan T {
 
 // Accumulate returns a channel that produces the accumulated sums of elements
 // from in.
-func Accumulate[T Ordered](in <-chan T) <-chan T {
+func Accumulate[T constraints.Ordered](in <-chan T) <-chan T {
 	out := make(chan T)
 	var prev T
 	go func() {

@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 
+	"golang.org/x/exp/constraints"
+
 	"github.com/YongJieYongJie/tttuples/atuple"
 )
 
@@ -288,7 +290,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	type testCaseCount[T Ordered] struct {
+	type testCaseCount[T constraints.Ordered] struct {
 		name       string
 		inputStart T
 		inputStep  T
