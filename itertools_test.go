@@ -202,7 +202,7 @@ func TestEnumerate(t *testing.T) {
 			arguments: []interface{}{
 				ChanFrom[int64](6, 6, 6),
 			},
-			expects: ChanFrom[atuple.Packed2[int, int64]](
+			expects: ChanFrom(
 				atuple.Pack2[int, int64](0, 6),
 				atuple.Pack2[int, int64](1, 6),
 				atuple.Pack2[int, int64](2, 6),
@@ -328,7 +328,7 @@ func TestCycle(t *testing.T) {
 		expect: []int64{2, 4, 6, 2, 4, 6, 2},
 	}
 
-	ch := Cycle[int64](case1.input)
+	ch := Cycle(case1.input)
 	for _, v := range case1.expect {
 		actual := <-ch
 		if v == actual {
@@ -516,25 +516,25 @@ func TestGroupBy(t *testing.T) {
 		name:  "basic",
 		input: Chan([]int64{1, 1, 1, 2, 2, 3, 3, 1, 1}),
 		expect: []atuple.Packed2[int64, <-chan int64]{
-			atuple.Pack2[int64, <-chan int64](1, Chan([]int64{1, 1, 1})),
-			atuple.Pack2[int64, <-chan int64](2, Chan([]int64{2, 2})),
-			atuple.Pack2[int64, <-chan int64](3, Chan([]int64{3, 3})),
-			atuple.Pack2[int64, <-chan int64](1, Chan([]int64{1, 1})),
+			atuple.Pack2[int64](1, Chan([]int64{1, 1, 1})),
+			atuple.Pack2[int64](2, Chan([]int64{2, 2})),
+			atuple.Pack2[int64](3, Chan([]int64{3, 3})),
+			atuple.Pack2[int64](1, Chan([]int64{1, 1})),
 		},
 	}
 
 	actual := GroupBy(case1.input)
-	for _, e := range case1.expect {
+	for i, e := range case1.expect {
 		a := <-actual
 		actualKey := a.Item1()
 		expectedKey := e.Item1()
 		if actualKey != expectedKey {
-			t.Errorf("Expected %v but got %v", expectedKey, actualKey)
+			t.Errorf("%d Expected %v but got %v", i, expectedKey, actualKey)
 		}
 		for expectedElem := range e.Item2() {
 			actualElem := <-a.Item2()
 			if actualElem != expectedElem {
-				t.Errorf("Expected %v but got %v", expectedElem, actualElem)
+				t.Errorf("%d Expected %v but got %v", i, expectedElem, actualElem)
 			}
 		}
 	}
@@ -791,7 +791,7 @@ func TestZipLongest(t *testing.T) {
 		name:            "basic",
 		input1:          Chan([]int{1, 2, 3}),
 		input2:          Chan([]float64{1.1, 2.2, 3.3, 4.4, 5.5}),
-		inputFillValues: atuple.Pack2[int, float64](9, 9.9),
+		inputFillValues: atuple.Pack2(9, 9.9),
 		expect: []atuple.Packed2[int, float64]{
 			atuple.Pack2(1, 1.1),
 			atuple.Pack2(2, 2.2),

@@ -14,7 +14,7 @@ import (
 	"github.com/YongJieYongJie/tttuples/atuple"
 )
 
-const buffer_size = 257 // Prime number closest to 256
+const buffer_size = 257 // Arbitrarily decided. Prime number closest to 256.
 
 // Number is a constraint that permits any number type: any type that
 // supports the arithmetic operators + - / *.
@@ -467,7 +467,6 @@ func FilterFalse[T any](pred func(T) bool, in <-chan T) <-chan T {
 // function.
 func GroupBy[T comparable](in <-chan T) <-chan atuple.Packed2[T, <-chan T] {
 	return GroupByKey(in, func(v T) T { return v })
-	// return GroupByKey(in, Identity[T])
 }
 
 // Identity returns the argument provided.
