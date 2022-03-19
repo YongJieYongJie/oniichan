@@ -492,23 +492,25 @@ func GroupByKey[T1 any, T2 comparable](
 			return
 		}
 
-		groupElems := make(chan T1, 1)
-		groupElems <- elem
 		groupKey := key(elem)
-		currGroup := atuple.Pack2[T2, <-chan T1](groupKey, groupElems)
-		out <- currGroup
-
-		for e := range in {
-			if groupKey == key(e) {
-				groupElems <- e
-			} else {
-				close(groupElems)
-				groupKey = key(e)
-				groupElems = make(chan T1, 1)
-				groupElems <- e
-				currGroup = atuple.Pack2[T2, <-chan T1](groupKey, groupElems)
-				out <- currGroup
+		groupElems := []T1{elem}
+		for elem = range in {
+			if groupKey == key(elem) {
+				groupElems = append(groupElems, elem)
+				continue
 			}
+			currGroup := atuple.Pack2(groupKey, Chan(groupElems))
+			out <- currGroup
+
+			// Reset loop variables
+			groupKey = key(elem)
+			groupElems = []T1{elem}
+		}
+
+		// Handle last group
+		if len(groupElems) != 0 {
+			currGroup := atuple.Pack2(groupKey, Chan(groupElems))
+			out <- currGroup
 		}
 	}()
 	return out
