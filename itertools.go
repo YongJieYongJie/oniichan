@@ -543,8 +543,8 @@ func SliceFromTo[T any](in <-chan T, start, stop int) <-chan T {
 // the start up to and before stop, analagous to to the indexing operation
 // [start:stop:step] on a slice.
 func SliceFromToStep[T any](in <-chan T, start, stop, step int) <-chan T {
-	if start > stop {
-		panic("invalid argument to SliceFromToStep: start must be smaller or equal to stop")
+	if start >= stop {
+		panic("invalid argument to SliceFromToStep: start must be smaller than stop")
 	}
 	if start < 0 {
 		panic("invalid argument to SliceFromToStep: start must be greater than or equal to zero")
@@ -555,24 +555,34 @@ func SliceFromToStep[T any](in <-chan T, start, stop, step int) <-chan T {
 	out := make(chan T)
 	go func() {
 		defer close(out)
-		enumerated := Enumerate(in)
-		for e := range enumerated {
-			if e.Item1() < start {
+		var i int = -1
+
+		// Get element until we reach start index.
+		for e := range in {
+			i++
+			if i < start {
 				continue
 			}
-			if e.Item1()%step == 0 {
-				out <- e.Item2()
-			}
+			out <- e
 			break
 		}
-		for e := range enumerated {
-			if e.Item1() >= stop {
-				return
-			}
-			if e.Item1()%step != 0 {
+
+		// Return early if the next element is stop.
+		if i+1 == stop {
+			return
+		}
+
+		for e := range in {
+			i++
+			if (i-start)%step != 0 {
 				continue
 			}
-			out <- e.Item2()
+			out <- e
+
+			// Return early if the next element is stop.
+			if i+1 == stop {
+				return
+			}
 		}
 	}()
 	return out
