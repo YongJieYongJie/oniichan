@@ -469,11 +469,6 @@ func GroupBy[T comparable](in <-chan T) <-chan atuple.Packed2[T, <-chan T] {
 	return GroupByKey(in, func(v T) T { return v })
 }
 
-// Identity returns the argument provided.
-func Identity[T any](x T) T {
-	return x
-}
-
 // GroupByKey returns a channel that returns consecutive keys and groups from
 // the input channel. The input key function is used to compute the key value
 // for each element. Generally, the input channel needs to be already sorted on

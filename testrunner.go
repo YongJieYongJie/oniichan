@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type TestCase interface {
+type testCase interface {
 	SUT() interface{}
 	Name() string
 	Arguments() []interface{}
@@ -26,7 +26,7 @@ func (tc *singleReturnTestCase) Name() string             { return tc.name }
 func (tc *singleReturnTestCase) Arguments() []interface{} { return tc.arguments }
 func (tc *singleReturnTestCase) Expects() []interface{}   { return []interface{}{tc.expects} }
 
-func RunTestCase(t *testing.T, tc TestCase) {
+func RunTestCase(t *testing.T, tc testCase) {
 	argsReflect := make([]reflect.Value, 0, len(tc.Arguments()))
 	for _, arg := range tc.Arguments() {
 		argsReflect = append(argsReflect, reflect.ValueOf(arg))
@@ -39,7 +39,7 @@ func RunTestCase(t *testing.T, tc TestCase) {
 	}
 	for i, retVal := range tc.Expects() {
 		if reflect.TypeOf(retVal).Kind() == reflect.Chan {
-			err := AssertChanEqual(t, retVal, ret[i].Interface())
+			err := assertChanEqual(t, retVal, ret[i].Interface())
 			if err != nil {
 				t.Errorf("Test failed [%s]: unexpected %d-th return value: %v",
 					tc.Name(), i+1, err)
@@ -57,7 +57,7 @@ func RunTestCase(t *testing.T, tc TestCase) {
 	}
 }
 
-func AssertChanEqual(t *testing.T, expectedCh, actualCh interface{}) error {
+func assertChanEqual(t *testing.T, expectedCh, actualCh interface{}) error {
 
 	if reflect.TypeOf(expectedCh).Kind() != reflect.Chan {
 		panic(fmt.Errorf("invalid argument to AssertChanEqual: expectedCh must "+
@@ -76,7 +76,7 @@ func AssertChanEqual(t *testing.T, expectedCh, actualCh interface{}) error {
 			break
 		}
 
-		a, err := TryRecvTimeout(actualCh, 5*time.Second)
+		a, err := tryRecvTimeout(actualCh, 5*time.Second)
 		if err != nil {
 			return fmt.Errorf("expected %d-th element of channel to be [%v](%T) but got error receiving from channel: %w",
 				i+1, eReflect, eReflect, err)
@@ -92,7 +92,7 @@ func AssertChanEqual(t *testing.T, expectedCh, actualCh interface{}) error {
 	return nil
 }
 
-func TryRecvTimeout(ch interface{}, timeout time.Duration) (elem interface{}, err error) {
+func tryRecvTimeout(ch interface{}, timeout time.Duration) (elem interface{}, err error) {
 	resultCh := make(chan interface{}, 1)
 	alreadyClosed := make(chan struct{})
 	go func() {

@@ -16,6 +16,8 @@ func printChannel[T any](c <-chan T) {
 // Below are examples showing how the various functions provided by oniichan
 // can be used as building blocks for other commonly-required operations.
 func Example_recipes() {
+	// Refer to the output comment below for the output.
+
 	fmt.Print("Example 1: ")
 	fmt.Println(`Take(ChanFrom("a", "b", "c"), 2)`)
 	printChannel(Take(ChanFrom("a", "b", "c"), 2))
